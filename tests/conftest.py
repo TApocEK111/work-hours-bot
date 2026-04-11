@@ -1,12 +1,17 @@
 from datetime import UTC, datetime, timedelta
 
 import pytest
+import pytest_asyncio
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
+from application.clock import Clock
 from domain.models.session import Session
 from domain.models.user import User
 from domain.repositories.session import SessionRepository
 from domain.repositories.user import UserRepository
-from application.clock import Clock
+from infrastructure.db.config import DBConfig
+from infrastructure.db.engine import create_engine, init_db
+from infrastructure.db.session import create_session_maker, get_session
 
 
 class MockUserRepository(UserRepository):
@@ -30,7 +35,7 @@ def mock_user_repo():
     return MockUserRepository()
 
 
-class MockSessionRepository(SessionRepository):
+class MockSessionRepository(SessionRepository):  # TODO: simplify this mock
     """Has sessions for two users (id: 1, 2) for 60 days 8 hours each day, since 01.01.0001 and one open after that."""
 
     count: int = 0
@@ -86,7 +91,7 @@ def mock_session_repo():
 
 
 class MockClock(Clock):
-    """now is 0001-03-02 08:00:00+00:00"""
+    """now is 2026-03-02 08:00:00+00:00"""
 
     def now(self) -> datetime:
         return datetime(2026, 3, 2, 8, tzinfo=UTC)
@@ -95,3 +100,24 @@ class MockClock(Clock):
 @pytest.fixture
 def mock_clock():
     return MockClock()
+
+
+@pytest_asyncio.fixture(scope="session")
+async def sqlite_engine() -> AsyncEngine:
+    config = DBConfig(url="sqlite+aiosqlite:///:memory:")
+    engine = create_engine(config)
+    await init_db(engine)
+    return engine
+
+
+@pytest.fixture(scope="session")
+def sqlite_sesionmaker(sqlite_engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
+    sessionmaker = create_session_maker(sqlite_engine)
+    return sessionmaker
+
+
+@pytest_asyncio.fixture
+async def sqlite_session(sqlite_sesionmaker: async_sessionmaker[AsyncSession]):
+    async with get_session(sqlite_sesionmaker) as session:
+        yield session
+        await session.rollback()
