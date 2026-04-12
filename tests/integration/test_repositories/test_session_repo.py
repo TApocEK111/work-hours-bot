@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.clock import Clock
 from domain.models.session import Session
-from infrastructure.db.models import SessionModel
+from infrastructure.db.models import SessionModel, UserModel
 from infrastructure.repositories.session import SQLiteSessionRepository
 
 
@@ -16,6 +16,8 @@ async def test_get_active_session(sqlite_session: AsyncSession, mock_clock: Cloc
     repo = SQLiteSessionRepository(sqlite_session)
 
     now = mock_clock.now()
+    sqlite_session.add(UserModel(name="test", id=1))
+    await sqlite_session.flush()
 
     sqlite_session.add(SessionModel(user_id=1, clock_in=now, clock_out=None))
     await sqlite_session.flush()
@@ -44,6 +46,8 @@ async def test_unique_open_session_per_user(
 async def test_saves_new_session(sqlite_session: AsyncSession, mock_clock: Clock):
     repo = SQLiteSessionRepository(sqlite_session)
     now = mock_clock.now()
+    sqlite_session.add(UserModel(name="test", id=1))
+    await sqlite_session.flush()
 
     await repo.save(Session.start(1, now))
 
@@ -58,10 +62,21 @@ async def test_saves_new_session(sqlite_session: AsyncSession, mock_clock: Clock
 
 
 @pytest.mark.asyncio
+async def test_foreign_key_constraints(sqlite_session: AsyncSession, mock_clock: Clock):
+    repo = SQLiteSessionRepository(sqlite_session)
+    now = mock_clock.now()
+
+    with pytest.raises(IntegrityError):
+        await repo.save(Session.start(1, now))
+
+
+@pytest.mark.asyncio
 async def test_saves_existing_session(sqlite_session: AsyncSession, mock_clock: Clock):
     repo = SQLiteSessionRepository(sqlite_session)
     now = mock_clock.now()
 
+    sqlite_session.add_all([UserModel(name="test", id=1), UserModel(name="test", id=2)])
+    await sqlite_session.flush()
     await repo.save(Session.start(1, now))
     await repo.save(Session.start(2, now))
 
@@ -138,6 +153,8 @@ async def test_get_for_period_by_user(
     repo = SQLiteSessionRepository(sqlite_session)
 
     # Arrange
+    sqlite_session.add(UserModel(name="test", id=user_id))
+    await sqlite_session.flush()
     for i, clock_in in enumerate(sessions_data):
         sqlite_session.add(
             SessionModel(
