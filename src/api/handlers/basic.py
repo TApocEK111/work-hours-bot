@@ -83,7 +83,7 @@ async def cmd_help(message: Message):
         "/clockout - use when you leave the work\n\n"
         "<b>View Hours</b>\n"
         "/today - see working hours today\n"
-        "/week - see working hours this week (can be across months)\n"
-        "/month - see working hours this month (from 1st)\n",
+        "/thisweek - see working hours this week (can be across months)\n"
+        "/thismonth - see working hours this month (from 1st)\n",
         parse_mode="HTML",
     )
