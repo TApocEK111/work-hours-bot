@@ -1,11 +1,13 @@
 from datetime import datetime
 
-from sqlalchemy import select, and_
+from sqlalchemy import and_, select
+from sqlalchemy.exc import IntegrityError
 
-from domain.repositories.session import SessionRepository
+from application.exceptions import NoUserError
 from domain.models.session import Session
-from infrastructure.repositories.async_base import BaseAsyncAlchemyRepository
+from domain.repositories.session import SessionRepository
 from infrastructure.db.models import SessionModel
+from infrastructure.repositories.async_base import BaseAsyncAlchemyRepository
 
 
 class SQLiteSessionRepository(SessionRepository, BaseAsyncAlchemyRepository):
@@ -63,7 +65,10 @@ class SQLiteSessionRepository(SessionRepository, BaseAsyncAlchemyRepository):
             session_model = self._to_model(session)
             self._db.add(session_model)
 
-        await self._db.flush()
+        try:
+            await self._db.flush()
+        except IntegrityError:
+            raise NoUserError
         await self._db.refresh(session_model)
 
         return self._to_domain(session_model)
