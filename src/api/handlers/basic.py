@@ -4,6 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
 
+from api.keyboards import simple_keyboard
 from application.exceptions import InvalidUserNameError, UserAlreadyExistsError
 from application.services.user import UserService
 from infrastructure.env import EnvVars, get_env
@@ -24,7 +25,7 @@ async def cmd_start(message: Message, user_service: UserService, state: FSMConte
     user = await user_service.get_by_id(message.from_user.id)
 
     if user:
-        await message.answer("Welcome back, master.")
+        await message.answer("Welcome back, master.", reply_markup=simple_keyboard())
     else:
         await message.answer(
             "Hi! You are new here. Enter the passphrase for registration or reset with /cancel."
@@ -75,7 +76,7 @@ async def cmd_cancel(message: Message, state: FSMContext):
 async def cmd_help(message: Message):
     await message.answer(
         "You can use these commands:\n\n"
-        "/start - check authorization status\n"
+        "/start - check authorization status and update keyboard\n"
         "/help - show this message\n\n"
         "<b>Main Usage</b>\n"
         "/clockin - use when you enter the work\n"
