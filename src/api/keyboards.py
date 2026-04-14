@@ -1,7 +1,7 @@
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
 
-def simple_keyboard():
+def clockinout_reply_keyboard():
     builder = ReplyKeyboardBuilder()
     builder.button(text="/clockin")
     builder.button(text="/clockout")
