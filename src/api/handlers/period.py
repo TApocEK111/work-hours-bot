@@ -1,6 +1,7 @@
 from typing import Any, Callable, Coroutine
 
 from aiogram import F, Router
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters.command import Command
 from aiogram.types import CallbackQuery, Message
 
@@ -54,6 +55,12 @@ async def period_callback_refresh(
         )
         sessions = await period_method(query.from_user.id)
         duration = session_service.sum_duration(sessions)
-        await query.message.edit_text(
-            f"{_COMMAND_VARS[callback_data.original_command]['period_name']} you've worked for {str(duration)}"
-        )
+        try:
+            await query.message.edit_text(  # type: ignore
+                f"{_COMMAND_VARS[callback_data.original_command]['period_name']} you've worked for {str(duration)}",
+                reply_markup=refresh_period_inline_keyboard(
+                    callback_data.original_command
+                ),
+            )
+        except TelegramBadRequest:
+            await query.answer("Nothing new.")
