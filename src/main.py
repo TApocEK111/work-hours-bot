@@ -25,7 +25,7 @@ async def main():
     dispatcher = create_dispatcher()
 
     dispatcher.message.middleware(DIMiddleware(container))
-    dispatcher.message.outer_middleware()
+    dispatcher.callback_query.middleware(DIMiddleware(container))
 
     await start_bot(bot_config.deploy_method, bot, dispatcher)
 
