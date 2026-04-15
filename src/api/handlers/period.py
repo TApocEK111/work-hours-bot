@@ -19,12 +19,12 @@ def _todict(method_name: str, period_name: str) -> dict[str, str]:
 
 _COMMAND_VARS = {
     "/today": _todict("get_today_sessions_by_user", "Today"),
-    "/thisweek": _todict("get_this_week_session_by_user", "This week"),
-    "/thismonth": _todict("get_this_month_session_by_user", "This month"),
+    "/thisweek": _todict("get_this_week_sessions_by_user", "This week"),
+    "/thismonth": _todict("get_this_month_sessions_by_user", "This month"),
 }
 
 
-@router.message(Command("today", "thisweek", "thisomonth"))
+@router.message(Command("today", "thisweek", "thismonth"))
 async def cmd_today(message: Message, session_service: SessionService):
     if not message.text:
         await message.answer("Somehow you've entered command handler without text.")
